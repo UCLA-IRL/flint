@@ -16,3 +16,16 @@ services:
     networks:
       ndn_compute_net:
         ipv4_address: 192.168.1.2
+  driver:
+    build: ./driver
+    volumes:
+      - ./driver/src:/app
+      - ../pkg/ndn_compute:/opt/ndn_compute:ro
+    container_name: driver
+    networks:
+      ndn_compute_net:
+        ipv4_address: 192.168.1.10
+    ports:
+      - "5214:5214"
+    environment:
+      - MANAGEMENT_PORT=5214
