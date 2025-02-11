@@ -20,7 +20,6 @@ services:
     build: ./driver
     volumes:
       - ./driver/src:/app
-      - ../pkg/ndn_compute:/opt/ndn_compute:ro
     container_name: driver
     networks:
       ndn_compute_net:
