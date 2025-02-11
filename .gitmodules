@@ -1,0 +1,3 @@
+[submodule "cluster/nfd-node"]
+	path = cluster/nfd-node
+	url = https://github.com/named-data/NFD.git
