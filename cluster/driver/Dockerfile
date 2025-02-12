@@ -2,12 +2,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy requirements.txt and install dependencies
-COPY cluster/driver/requirements.txt .
-COPY pkg/ndn_compute /opt/ndn_compute
+COPY pkg /opt/nc_pkg
 
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install -e /opt/ndn_compute
+RUN for dir in /opt/nc_pkg/*/; do [ -d "$dir" ] && pip install -e "$dir"; done
 
-
-CMD ["python", "driver.py"]
+CMD ["python", "-m", "ndn_compute_rpc_server"]

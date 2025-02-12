@@ -1,5 +1,5 @@
-__all__ = ['NdnComputeClient', 'NdnComputeServer']
+__all__ = ['NdnComputeClient', 'NdnComputeRemote']
 
 
 from .ndn_compute_client import NdnComputeClient
-from .ndn_compute_server import NdnComputeServer
+from .ndn_compute_remote import NdnComputeRemote

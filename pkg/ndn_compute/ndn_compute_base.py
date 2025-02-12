@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class NdnCompute(ABC):
+class NdnComputeBase(ABC):
     @abstractmethod
     def add(self, x: int, y: int) -> int:
         pass

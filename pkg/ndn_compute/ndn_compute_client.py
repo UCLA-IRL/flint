@@ -1,8 +1,8 @@
-from ndn_compute import NdnCompute
+from ndn_compute_base import NdnComputeBase
 from xmlrpc.client import ServerProxy
 
 
-class NdnComputeClient(NdnCompute):
+class NdnComputeClient(NdnComputeBase):
     def __init__(self, url: str = 'http://localhost:5214/'):
         self.proxy = ServerProxy(url)
 
