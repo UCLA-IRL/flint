@@ -20,9 +20,7 @@ services:
     build: 
       context: ./
       dockerfile: ./cluster/driver/Dockerfile
-    volumes:
-      - ./cluster/driver/src:/app
-    container_name: driver
+    container_name: driver1
     networks:
       ndn_compute_net:
         ipv4_address: 192.168.1.10
@@ -30,3 +28,21 @@ services:
       - "5214:5214"
     environment:
       - MANAGEMENT_PORT=5214
+  # TODO: docker-compose for loop??
+  # TODO: doing it like this generates an image for every instance, even though the instance is identical
+  worker1:
+    build:
+      context: ./
+      dockerfile: ./cluster/worker/Dockerfile
+    container_name: worker1
+    networks:
+      ndn_compute_net:
+        ipv4_address: 192.168.1.20
+  worker2:
+    build:
+      context: ./
+      dockerfile: ./cluster/worker/Dockerfile
+    container_name: worker2
+    networks:
+      ndn_compute_net:
+        ipv4_address: 192.168.1.21
