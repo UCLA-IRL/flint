@@ -7,9 +7,9 @@ networks:
 
 services:
   nfd:
-    build: ./nfd-node
+    build: ./cluster/nfd-node
     volumes:
-       - ./nfd-node-config:/custom-config
+       - ./cluster/nfd-node-config:/custom-config
     entrypoint: ["/usr/bin/nfd"]
     command: ["--config", "/custom-config/nfd.conf"]
     container_name: nfd1
@@ -17,9 +17,11 @@ services:
       ndn_compute_net:
         ipv4_address: 192.168.1.2
   driver:
-    build: ./driver
+    build: 
+      context: ./
+      dockerfile: ./cluster/driver/Dockerfile
     volumes:
-      - ./driver/src:/app
+      - ./cluster/driver/src:/app
     container_name: driver
     networks:
       ndn_compute_net:
