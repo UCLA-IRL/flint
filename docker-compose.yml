@@ -16,6 +16,8 @@ services:
     networks:
       ndn_compute_net:
         ipv4_address: 192.168.1.2
+    environment:
+      - APP_PREFIX=ndn-compute
   driver:
     build: 
       context: ./
@@ -27,6 +29,7 @@ services:
     ports:
       - "5214:5214"
     environment:
+      - APP_PREFIX=ndn-compute
       - MANAGEMENT_PORT=5214
   # TODO: docker-compose for loop??
   # TODO: doing it like this generates an image for every instance, even though the instance is identical
@@ -38,6 +41,8 @@ services:
     networks:
       ndn_compute_net:
         ipv4_address: 192.168.1.20
+    environment:
+      - APP_PREFIX=ndn-compute
   worker2:
     build:
       context: ./
@@ -46,3 +51,5 @@ services:
     networks:
       ndn_compute_net:
         ipv4_address: 192.168.1.21
+    environment:
+      - APP_PREFIX=ndn-compute

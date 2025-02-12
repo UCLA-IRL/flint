@@ -1,4 +1,5 @@
 import asyncio
+import os
 from ndn_compute_base import NdnComputeBase
 from ndn.appv2 import NDNApp
 from ndn.encoding import Name
@@ -13,6 +14,7 @@ class NdnComputeRemote(NdnComputeBase):
     def __init__(self, app: NDNApp, object_store: NdnDriverObjectStore):
         self.app: NDNApp = app
         self.object_store: NdnDriverObjectStore = object_store
+        self.app_prefix = os.environ.get("APP_PREFIX")
 
     def add(self, x: int, y: int) -> int:
         loop = asyncio.get_running_loop()
@@ -23,7 +25,7 @@ class NdnComputeRemote(NdnComputeBase):
         try:
             data_name, content, context = asyncio.run(self.app.express(
                 # Interest Name
-                f'/add/{x}/{y}',
+                f'/{self.app_prefix}/add/{x}/{y}',
                 all_valid,
                 must_be_fresh=False,
                 can_be_prefix=False,
