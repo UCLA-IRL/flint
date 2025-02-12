@@ -3,14 +3,16 @@ from ndn_compute_base import NdnComputeBase
 from ndn.appv2 import NDNApp
 from ndn.encoding import Name
 from ndn.types import ValidResult, InterestNack, InterestTimeout, InterestCanceled, ValidationFailure
+from ndn_driver_object_store import NdnDriverObjectStore
 
 import nest_asyncio
 nest_asyncio.apply()
 
 
 class NdnComputeRemote(NdnComputeBase):
-    def __init__(self, app: NDNApp):
-        self.app = app
+    def __init__(self, app: NDNApp, object_store: NdnDriverObjectStore):
+        self.app: NDNApp = app
+        self.object_store: NdnDriverObjectStore = object_store
 
     def add(self, x: int, y: int) -> int:
         loop = asyncio.get_running_loop()

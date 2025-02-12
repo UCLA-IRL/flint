@@ -7,19 +7,30 @@ from ndn.appv2 import NDNApp
 from ndn.transport.udp_face import UdpFace
 from xmlrpc.server import SimpleXMLRPCServer
 from ndn_compute_remote import NdnComputeRemote
+from ndn_driver_object_store import NdnDriverObjectStore
 
 app: Optional[NDNApp] = None
 server: Optional[SimpleXMLRPCServer] = None
+object_store: Optional[NdnDriverObjectStore] = None
 
 
-def handle_signal(signal_num, frame):
+def handle_signal(signal_num, frame) -> None:
     if server is not None:
         server.shutdown()
 
     if app is not None:
         app.shutdown()
 
+    if object_store is not None:
+        object_store.shutdown()
+
     sys.exit(0)
+
+
+def run_object_server() -> None:
+    global object_store
+    object_store = NdnDriverObjectStore('/app/objects.db', ['Transformation'], True)
+    object_store.serve_detached()
 
 
 async def serve_rpc() -> None:
@@ -33,12 +44,14 @@ async def serve_rpc() -> None:
 
     global server
     server = SimpleXMLRPCServer(("0.0.0.0", management_port))
-    server.register_instance(NdnComputeRemote(app))
+    server.register_instance(NdnComputeRemote(app, object_store))
     server.serve_forever()
 
 
 def main() -> None:
     signal.signal(signal.SIGINT, handle_signal) # Ctrl+C
+
+    run_object_server()
 
     face = UdpFace('nfd1')
 
