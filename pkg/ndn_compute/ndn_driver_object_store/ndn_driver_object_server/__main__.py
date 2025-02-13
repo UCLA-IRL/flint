@@ -18,7 +18,7 @@ object_store: Optional[NdnDriverObjectStore] = None
 app_prefix = os.environ.get("APP_PREFIX")
 
 
-@app.route(f'/{app}/object/')
+@app.route(f'/{app_prefix}/object/')
 def on_object_interest(name: FormalName, app_param: Optional[BinaryStr], reply: ReplyFunc, context: PktContext) -> None:
     collection = bytes(Component.get_value(name[2])).decode('utf-8')
     object_id = UUID(bytes(Component.get_value(name[3])).decode('utf-8'))
