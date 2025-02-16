@@ -8,6 +8,7 @@ from ndn.transport.udp_face import UdpFace
 from ndn.appv2 import NDNApp, ReplyFunc, PktContext
 from ndn.encoding import BinaryStr, FormalName, Component
 from ndn.security import NullSigner
+from python_ndn_ext import announce_prefix
 
 
 time.sleep(1)
@@ -18,7 +19,6 @@ object_store: Optional[NdnDriverObjectStore] = None
 app_prefix = os.environ.get("APP_PREFIX")
 
 
-@app.route(f'/{app_prefix}/object/')
 def on_object_interest(name: FormalName, app_param: Optional[BinaryStr], reply: ReplyFunc, context: PktContext) -> None:
     collection = bytes(Component.get_value(name[2])).decode('utf-8')
     object_id = UUID(bytes(Component.get_value(name[3])).decode('utf-8'))
@@ -34,11 +34,16 @@ def on_object_interest(name: FormalName, app_param: Optional[BinaryStr], reply: 
     reply(data)
 
 
+async def object_server_setup():
+    await announce_prefix(app, f'/{app_prefix}/object/', NullSigner())
+    app.attach_handler(f'/{app_prefix}/object/', on_object_interest)
+
+
 def main(database: str, collections: list[str]):
     global object_store
     object_store = NdnDriverObjectStore(database, collections)
 
-    app.run_forever()
+    app.run_forever(after_start=object_server_setup())
 
 
 if __name__ == "__main__":
