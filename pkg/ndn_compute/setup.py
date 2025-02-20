@@ -7,5 +7,6 @@ setup(
     install_requires=[
         "python-ndn==0.5.0",
         "nest-asyncio==1.6.0",
+        "dill==0.3.9",
     ],
 )

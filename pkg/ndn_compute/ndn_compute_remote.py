@@ -1,6 +1,6 @@
 import asyncio
 import os
-from ndn_compute_base import NdnComputeBase
+import uuid
 from ndn.appv2 import NDNApp
 from ndn.encoding import Name
 from ndn.types import ValidResult, InterestNack, InterestTimeout, InterestCanceled, ValidationFailure
@@ -10,7 +10,10 @@ import nest_asyncio
 nest_asyncio.apply()
 
 
-class NdnComputeRemote(NdnComputeBase):
+TRANSFORMATION_COLLECTION = "Transformation"
+
+
+class NdnComputeRemote:
     def __init__(self, app: NDNApp, object_store: NdnDriverObjectStore):
         self.app: NDNApp = app
         self.object_store: NdnDriverObjectStore = object_store
@@ -53,3 +56,14 @@ class NdnComputeRemote(NdnComputeBase):
             print(f'Data failed to validate')
             return -5
 
+    def register_transformation(self, func: bytes) -> str:
+        random_uuid = uuid.uuid4()
+        self.object_store.create_object(TRANSFORMATION_COLLECTION, random_uuid, func)
+
+        return str(random_uuid)
+
+    def add_transformation_path(self, path: str, transformations: list[str]) -> None:
+        raise NotImplementedError(f"add_transformation_path({path}, {repr(transformations)})")
+
+    def cache_transformation_path(self, path: str, transformations: list[str]) -> None:
+        raise NotImplementedError(f"cache_transformation_path({path}, {repr(transformations)})")

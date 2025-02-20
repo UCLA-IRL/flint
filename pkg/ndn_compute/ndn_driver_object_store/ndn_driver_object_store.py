@@ -42,7 +42,7 @@ class NdnDriverObjectStore:
         cursor.execute('''
         INSERT INTO "{}" (Id, Value) 
         VALUES (?, ?)
-        '''.format(collection), (str(object_id), value))
+        '''.format(collection), (str(object_id), sqlite3.Binary(value)))
 
         self.conn.commit()
 

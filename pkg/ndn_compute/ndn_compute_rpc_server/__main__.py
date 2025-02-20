@@ -43,7 +43,7 @@ async def serve_rpc() -> None:
     print(f"Driver running at {management_port} (may also be forwarded to host machine)", flush=True)
 
     global server
-    server = SimpleXMLRPCServer(("0.0.0.0", management_port))
+    server = SimpleXMLRPCServer(("0.0.0.0", management_port), use_builtin_types=True, allow_none=True)
     server.register_instance(NdnComputeRemote(app, object_store))
     server.serve_forever()
 
