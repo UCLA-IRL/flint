@@ -1,6 +1,21 @@
 import random
-from typing import List, Set
+import json
+from typing import List, Set, Dict
 from pathlib import Path
+from dataclasses import dataclass, asdict
+
+
+@dataclass
+class ChunkInfo:
+    sequence: int
+    size: int
+    partitions: List[int]
+
+
+@dataclass
+class FileInfo:
+    filePath: str
+    chunks: List[ChunkInfo]
 
 
 def create_fs_from_directory(in_dir: str, out_dir: str,
@@ -18,6 +33,7 @@ def create_fs_from_directory(in_dir: str, out_dir: str,
     4. For every chunk, choose at random which `num_copies` partitions to which to put the chunk in,
       then move the chunk to the folder whose name corresponds to the original file. The
       chunk will be named "i" where i is the 0-indexed order of the chunk.
+    5. Generate a fs-manifest.json in the root of out_dir containing metadata about all files and chunks.
 
     Precondition:
     - `num_copies` <= `num_partitions`
@@ -42,6 +58,9 @@ def create_fs_from_directory(in_dir: str, out_dir: str,
         partition_dir = out_path / str(i)
         partition_dir.mkdir()
         partition_dirs.append(partition_dir)
+
+    # List to store file metadata for manifest
+    files_metadata: List[FileInfo] = []
 
     def should_process_path(path: Path) -> bool:
         """Check if a path should be processed (not hidden)."""
@@ -101,10 +120,25 @@ def create_fs_from_directory(in_dir: str, out_dir: str,
             rel_path = file_path.relative_to(in_path)
             chunks = chunk_file(file_path, chunk_size)
 
+            # Initialize file metadata
+            file_info = FileInfo(
+                filePath=str(rel_path),
+                chunks=[]
+            )
+
             # Process each chunk
             for chunk_idx, chunk_content in enumerate(chunks):
                 # Select random partitions for this chunk
-                selected_partitions = select_random_partitions(num_partitions, num_copies)
+                selected_partitions = sorted(select_random_partitions(num_partitions, num_copies))
+                current_chunk_size = len(chunk_content.encode('utf-8'))
+
+                # Create chunk metadata
+                chunk_info = ChunkInfo(
+                    sequence=chunk_idx,
+                    size=current_chunk_size,
+                    partitions=list(selected_partitions)
+                )
+                file_info.chunks.append(chunk_info)
 
                 # Write chunk to selected partitions inside the file's directory
                 for partition_num in selected_partitions:
@@ -114,3 +148,12 @@ def create_fs_from_directory(in_dir: str, out_dir: str,
 
                     with open(chunk_path, 'w', encoding='utf-8') as f:
                         f.write(chunk_content)
+
+            files_metadata.append(file_info)
+
+    # Step 5: Write manifest
+    manifest_path = out_path / "fs-manifest.json"
+    with open(manifest_path, 'w', encoding='utf-8') as f:
+        # Use asdict to convert dataclasses to dictionaries for JSON serialization
+        manifest_data = [asdict(file_info) for file_info in files_metadata]
+        json.dump(manifest_data, f, indent=2)
