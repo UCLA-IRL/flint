@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Self, Optional
 import dill
+import pandas as pd
 
 
 class NdnComputeClient:
@@ -21,14 +22,12 @@ class NdnComputeClient:
         def cache(self) -> Self:
             pass
 
-        # TODO: decide a return type. e.g., pandas dataframe, str, custom type?
-        # TODO: pandas should be really fast with JSONL and the ujson or orjson libraries installed
         @abstractmethod
-        def reduce(self, func: Callable):
+        def reduce(self, func: Callable) -> pd.DataFrame:
             pass
 
         @abstractmethod
-        def collect(self):
+        def collect(self) -> pd.DataFrame:
             pass
 
         @abstractmethod
@@ -56,10 +55,10 @@ class NdnComputeClient:
                 transformations_copy = list(self._transformations)
                 return Dataset(self._path, self._client, transformations_copy)
 
-            def reduce(self, func: Callable):
+            def reduce(self, func: Callable) -> pd.DataFrame:
                 raise NotImplementedError("reduce")
 
-            def collect(self):
+            def collect(self) -> pd.DataFrame:
                 raise NotImplementedError("collect")
 
             def for_each(self, func: Callable) -> None:
