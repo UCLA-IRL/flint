@@ -62,9 +62,9 @@ class NdnComputeClient:
             """
             Perform a distributed reduce and obtain the result.
 
-            Equivalent to: return df.groupby('key').apply(func)
+            Equivalent to: return df.agg(func)
 
-            :param func: Function to pass to `apply` after the dataframe is grouped by the key.
+            :param func: function, list, or label -> function dict describing the aggregation
             :return: The resulting dataframe
             """
             pass

@@ -68,7 +68,7 @@ def generate_large_jsonl(filename: str, target_size_mb: float) -> None:
 
     with open(filename, 'w') as f:
         while current_size < target_size_bytes:
-            record = generate_kv_record()
+            record = generate_record()
             json_line = json.dumps(record) + '\n'
             f.write(json_line)
 
