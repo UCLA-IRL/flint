@@ -6,6 +6,9 @@ from ndn.security import NullSigner
 
 
 class WorkerHandler:
+    """
+    Contains methods (interest handlers) to handle interests in RDDs.
+    """
     @staticmethod
     def on_add_interest(name: FormalName, app_param: Optional[BinaryStr], reply: ReplyFunc,
                         context: PktContext) -> None:

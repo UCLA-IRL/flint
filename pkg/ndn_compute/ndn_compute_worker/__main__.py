@@ -1,3 +1,8 @@
+"""
+Entry points for nodes acting as workers. The entry point is responsible for starting an NDN app listening for RDD
+interests.
+"""
+
 import os
 import time
 from ndn.appv2 import NDNApp

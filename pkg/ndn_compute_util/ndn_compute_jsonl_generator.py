@@ -44,6 +44,14 @@ def generate_record() -> Dict[str, Any]:
     }
 
 
+def generate_kv_record() -> Dict[str, Any]:
+    """Generate a single key-value record with key: 0, value: dummy data."""
+    return {
+        "key": 0,
+        "value": generate_record()
+    }
+
+
 def generate_large_jsonl(filename: str, target_size_mb: float) -> None:
     """
     Generate a large JSONL file with dummy data.
@@ -60,7 +68,7 @@ def generate_large_jsonl(filename: str, target_size_mb: float) -> None:
 
     with open(filename, 'w') as f:
         while current_size < target_size_bytes:
-            record = generate_record()
+            record = generate_kv_record()
             json_line = json.dumps(record) + '\n'
             f.write(json_line)
 

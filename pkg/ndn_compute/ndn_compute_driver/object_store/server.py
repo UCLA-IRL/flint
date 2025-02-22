@@ -1,3 +1,7 @@
+"""
+Serve the object store as an NDN App accepting interests for objects.
+"""
+
 import argparse
 import os
 import time

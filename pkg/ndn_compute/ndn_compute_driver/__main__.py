@@ -1,3 +1,12 @@
+"""
+Entry point for the node acting as a driver. The entry point is responsible for starting three
+"processes": the object store server, the RPC server, and the executor's NDN app. Note that the RPC server and NDN app
+live in the same process, thus requiring the use of nested asyncio. (Note that the previous sentences contradict with
+the hierarchy of the layered diagram, as the diagram shows module interaction and *not* the process tree). The
+aforementioned RPC server serves objects in the ndn_compute_remote module. In addition to serving ndn_compute_remote,
+its submodules are used by ndn_compute_remote's classes.
+"""
+
 import asyncio
 import os
 import signal

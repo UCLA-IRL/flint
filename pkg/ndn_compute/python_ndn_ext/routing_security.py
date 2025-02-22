@@ -13,6 +13,8 @@ async def announce_prefix(app: NDNApp, name: NonStrictName, signer: Signer,
     """
     Announce a prefix (unofficial method written as an extension to python-ndn)
 
+    Parameter usage similar to register_prefix.
+
     Expiration should be in milliseconds(?)
 
     See https://redmine.named-data.net/projects/nfd/wiki/PrefixAnnouncement/

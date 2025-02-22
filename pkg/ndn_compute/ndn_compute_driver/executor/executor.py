@@ -6,6 +6,11 @@ from ndn.types import ValidResult, InterestNack, InterestTimeout, InterestCancel
 
 
 class DriverExecutor:
+    """
+    Class containing asyncio methods which ask workers to do certain tasks (such as obtaining one or more RDDs)
+    through interests.
+    """
+
     def __init__(self, app: NDNApp):
         self.app: NDNApp = app
         self.app_prefix = os.environ.get("APP_PREFIX")

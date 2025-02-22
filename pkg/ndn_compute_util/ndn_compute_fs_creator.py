@@ -40,6 +40,12 @@ def create_fs_from_directory(in_dir: str, out_dir: str,
     - `in_dir`, `out_dir`, exist as directories on the filesystem
     - `out_dir` should be empty
     - all files in in_dir are text files
+
+    :param in_dir: Path to directory with flat files, the directory is treated as the "root" of the filesystem
+    :param out_dir: Path to place the manifest and partitioned filesystems
+    :param num_partitions: Basically the number of nodes (workers) you have
+    :param num_copies: How many copies to make of each chunk
+    :param chunk_size: Chunk size in megabytes
     """
     in_path = Path(in_dir)
     out_path = Path(out_dir)
