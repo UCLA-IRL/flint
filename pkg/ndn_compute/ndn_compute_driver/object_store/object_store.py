@@ -5,7 +5,7 @@ import re
 from uuid import UUID
 
 
-class NdnDriverObjectStore:
+class DriverObjectStore:
     def __init__(self, database: str, collections: list[str], create_collections: bool = False):
         self.database_path = database
         self.conn = sqlite3.connect(database)
@@ -63,7 +63,7 @@ class NdnDriverObjectStore:
     def serve_detached(self):
         subprocess.Popen([
                 "python", "-m",
-                "ndn_driver_object_store.ndn_driver_object_server",
+                "ndn_compute_driver.object_store.server",
                 "--database", self.database_path,
                 "--collections", *self.collections
              ],

@@ -3,7 +3,7 @@ import os
 import time
 from uuid import UUID
 from typing import Optional
-from ndn_driver_object_store import NdnDriverObjectStore
+from ndn_compute_driver.object_store import DriverObjectStore
 from ndn.transport.udp_face import UdpFace
 from ndn.appv2 import NDNApp, ReplyFunc, PktContext
 from ndn.encoding import BinaryStr, FormalName, Component
@@ -15,7 +15,7 @@ time.sleep(1)
 print("Object store awake", flush=True)
 app = NDNApp(UdpFace('nfd1'))
 
-object_store: Optional[NdnDriverObjectStore] = None
+object_store: Optional[DriverObjectStore] = None
 app_prefix = os.environ.get("APP_PREFIX")
 
 
@@ -41,7 +41,7 @@ async def object_server_setup():
 
 def main(database: str, collections: list[str]):
     global object_store
-    object_store = NdnDriverObjectStore(database, collections)
+    object_store = DriverObjectStore(database, collections)
 
     app.run_forever(after_start=object_server_setup())
 

@@ -1,0 +1,2 @@
+class LineageManager:
+    pass

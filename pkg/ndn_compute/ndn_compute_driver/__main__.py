@@ -6,12 +6,18 @@ from typing import Optional
 from ndn.appv2 import NDNApp
 from ndn.transport.udp_face import UdpFace
 from xmlrpc.server import SimpleXMLRPCServer
+
+from ndn_compute_driver.object_store import DriverObjectStore
 from ndn_compute_remote import NdnComputeRemote
-from ndn_driver_object_store import NdnDriverObjectStore
+
+
+import nest_asyncio
+nest_asyncio.apply()
+
 
 app: Optional[NDNApp] = None
 server: Optional[SimpleXMLRPCServer] = None
-object_store: Optional[NdnDriverObjectStore] = None
+object_store: Optional[DriverObjectStore] = None
 
 
 def handle_signal(signal_num, frame) -> None:
@@ -29,7 +35,7 @@ def handle_signal(signal_num, frame) -> None:
 
 def run_object_server() -> None:
     global object_store
-    object_store = NdnDriverObjectStore('/app/objects.db', ['Transformation'], True)
+    object_store = DriverObjectStore('/app/objects.db', ['Transformation'], True)
     object_store.serve_detached()
 
 
