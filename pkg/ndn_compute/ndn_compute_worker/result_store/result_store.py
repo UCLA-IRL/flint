@@ -34,6 +34,11 @@ class WorkerResultStore:
         if self._memory_used > self._memory_limit:
             self._evict()
 
+    def has_result(self, name: FormalName) -> bool:
+        name_hash = zlib.crc32(Name.to_str(name).encode())
+
+        return name_hash in self._names
+
     def get_result_segment(self, name: FormalName, segment: int) -> (bytes, int):
         name_hash = zlib.crc32(Name.to_str(name).encode())
 

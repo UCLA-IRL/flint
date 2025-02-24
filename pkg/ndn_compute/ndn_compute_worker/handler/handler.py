@@ -33,7 +33,8 @@ class WorkerHandler:
         data = make_data(name, MetaInfo(), bytes(), NullSigner())
         result_name = [name[0]] + Name.from_str('/result/urandom')  # This is bad code, don't copy it.
 
-        asyncio.create_task(self._compute.compute_urandom(result_name))
+        if not self._result_store.has_result(result_name):
+            asyncio.create_task(self._compute.compute_urandom(result_name))
 
         reply(data)
 
