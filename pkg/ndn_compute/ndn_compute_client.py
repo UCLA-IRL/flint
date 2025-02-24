@@ -31,6 +31,14 @@ class NdnComputeClient:
         """
         return self.proxy.add(x, y)
 
+    def urandom(self) -> bytes:
+        """
+        Test fetching a large, asynchronous result (random bytes)
+
+        :return: The random bytes fetched
+        """
+        return self.proxy.urandom()
+
     class DatasetBase(ABC):
         """
         Represents a distributed dataset and its operational/transformational lineage.

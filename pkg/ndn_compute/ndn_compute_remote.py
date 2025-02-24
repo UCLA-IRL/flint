@@ -25,6 +25,14 @@ class NdnComputeRemote:
         """
         return asyncio.run(self.executor.execute_add(x, y))
 
+    def urandom(self) -> bytes:
+        """
+        Test fetching a large, asynchronous result (random bytes)
+
+        :return: The random bytes fetched
+        """
+        return asyncio.run(self.executor.execute_urandom())
+
     def register_transformation(self, func: bytes) -> str:
         """
         Register a transformation with the object store.
