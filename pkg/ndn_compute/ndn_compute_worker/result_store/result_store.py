@@ -12,7 +12,7 @@ class WorkerResultStore:
 
     MUST be run as *synchronous* code called from an existing event loop
     """
-    def __init__(self, app: NDNApp, segment_size: int = 1024, memory_limit: int = 1024 * 1024 * 1024):
+    def __init__(self, app: NDNApp, segment_size: int = 1024, memory_limit: int = 2048 * 1024 * 1024):
         self._app: NDNApp = app
         self._segment_size = segment_size
         self._memory_limit: int = memory_limit
@@ -63,10 +63,10 @@ class WorkerResultStore:
         return result[start_offset:end_offset], final_segment
 
     def _evict(self):
-        if len(self._usage_history) <= 1:
-            return
-
         while self._memory_used > self._memory_limit:
+            if len(self._usage_history) <= 1:
+                return
+
             name_hash = self._usage_history.pop()
 
             self._memory_used -= len(self._store[name_hash])
