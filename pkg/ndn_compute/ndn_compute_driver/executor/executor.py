@@ -3,7 +3,7 @@ import os
 from ndn.appv2 import NDNApp
 from ndn.encoding import Name, Component
 from ndn.types import ValidResult, InterestNack, InterestTimeout, InterestCanceled, MetaInfo, ValidationFailure
-from python_ndn_ext import fetch_segments
+from python_ndn_ext import fetch_segments_with_retry
 
 
 async def all_valid(name, sig, ctx) -> ValidResult:
@@ -81,8 +81,9 @@ class DriverExecutor:
 
         result_bytes = bytearray()
         try:
-            async for segment in fetch_segments(self.app, Name.from_str(f'/{self.app_prefix}/result/urandom'),
-                                                all_valid):
+            async for segment in fetch_segments_with_retry(self.app,
+                                                           Name.from_str(f'/{self.app_prefix}/result/urandom'),
+                                                           all_valid):
                 result_bytes.extend(segment)
 
             return bytes(result_bytes)

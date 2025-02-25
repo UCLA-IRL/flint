@@ -8,11 +8,19 @@ from python_ndn_ext import announce_prefix
 
 class WorkerResultStore:
     """
-    Stores and announces distributed datasets, evicts as necessary
+    Stores and announces distributed datasets, evicts as necessary using LRU
+
+    Note that the interest handler for results is not in this class, one should write their own handler. However, it
+    will announce the necessary prefix.
 
     MUST be run as *synchronous* code called from an existing event loop
     """
     def __init__(self, app: NDNApp, segment_size: int = 1024, memory_limit: int = 2048 * 1024 * 1024):
+        """
+        :param app: NDN app in which to announce the result prefix
+        :segment_size: The size (in bytes) of each segment to break the result into
+        :memory_limit: The maximum size of results to store in RAM (results beyond the limit will be evicted).
+        """
         self._app: NDNApp = app
         self._segment_size = segment_size
         self._memory_limit: int = memory_limit
@@ -22,6 +30,14 @@ class WorkerResultStore:
         self._names: dict[int, FormalName] = dict()
 
     def add_result(self, name: FormalName, result: bytes) -> None:
+        """
+        Make a result available by storing it and announcing the name.
+
+        NOTE: this method *may* evict older results if above the memory limit, but it will not evict the most recent one
+
+        :param name: The name (should be the result name, not the request name) to announce, excluding the segment
+        :param result: The content of the result, as bytes
+        """
         name_hash = zlib.crc32(Name.to_str(name).encode())
 
         self._memory_used += len(result)
@@ -35,11 +51,27 @@ class WorkerResultStore:
             self._evict()
 
     def has_result(self, name: FormalName) -> bool:
+        """
+        Check whether the result is (still) saved in the result store
+
+        :param name: The result name to query, excluding the segment component
+        :return: True if the result is in the result store, False otherwise
+        """
         name_hash = zlib.crc32(Name.to_str(name).encode())
 
         return name_hash in self._names
 
     def get_result_segment(self, name: FormalName, segment: int) -> (bytes, int):
+        """
+        Obtain a portion of the result data, at a certain segment number
+
+        Note that the returned final segment number is inclusive (i.e., it is the last valid segment number)
+
+        :param name: The result name to query, excluding the segment component
+        :param segment: The (0-indexed) segment number
+        :return: A tuple of (result data segment, final segment number)
+        :raises Exception: Invalid segment number; the result is not in the store or has been evicted
+        """
         name_hash = zlib.crc32(Name.to_str(name).encode())
 
         if name_hash not in self._names:
