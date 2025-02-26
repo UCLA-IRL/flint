@@ -10,8 +10,8 @@ class WorkerResultStore:
     """
     Stores and announces distributed datasets, evicts as necessary using LRU
 
-    Note that the interest handler for results is not in this class, one should write their own handler. However, it
-    will announce the necessary prefix.
+    Note that the interest handler for results is NOT in this class, one should write their own handler. However, this
+    class will announce the necessary prefixes for the specific data stored in the result store.
 
     MUST be run as *synchronous* code called from an existing event loop
     """
@@ -52,7 +52,7 @@ class WorkerResultStore:
 
     def has_result(self, name: FormalName) -> bool:
         """
-        Check whether the result is (still) saved in the result store
+        Check whether the result is (still) saved in the result store. Does not update LRU in any way.
 
         :param name: The result name to query, excluding the segment component
         :return: True if the result is in the result store, False otherwise
@@ -63,7 +63,7 @@ class WorkerResultStore:
 
     def get_result_segment(self, name: FormalName, segment: int) -> (bytes, int):
         """
-        Obtain a portion of the result data, at a certain segment number
+        Obtain a portion of the result data, at a certain segment number. Updates the LRU.
 
         Note that the returned final segment number is inclusive (i.e., it is the last valid segment number)
 

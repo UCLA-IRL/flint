@@ -8,13 +8,19 @@ from ndn.encoding import FormalName
 
 class WorkerCompute:
     """
-    Actually materializes, the RDDs, reads from a queue to see what tasks to do
+    Asynchronous methods that materialize RDDs, then saves them in the result store (which makes them available)
     """
     def __init__(self, app: NDNApp, result_store: WorkerResultStore):
         self._app = app
         self._result_store = result_store
 
     async def compute_urandom(self, name: FormalName) -> None:
+        """
+        Makes random bytes (with a sleep to simulate an asyncio operation such as an object store query)
+
+        :param name: The name of the result (not the request) - in a non-exemplar method this would be parsed to
+                     determine what work to do.
+        """
         await asyncio.sleep(2)
         random_bytes = os.urandom(64 * 1024 * 1024)  # 64 MB
 

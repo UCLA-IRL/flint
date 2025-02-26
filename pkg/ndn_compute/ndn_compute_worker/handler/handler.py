@@ -40,6 +40,9 @@ class WorkerHandler:
 
     def on_result_interest(self, name: FormalName, app_param: Optional[BinaryStr], reply: ReplyFunc,
                         context: PktContext) -> None:
+        """
+        Special interest handler used to return segmented result data stored in the result store.
+        """
         result_name = name[:-1]
         segment = Component.to_number(name[-1])
 
