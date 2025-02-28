@@ -52,7 +52,7 @@ class NdnComputeRemote:
         :param path: The name (path) of the distributed dataset.
         :param transformations: The series of planned transformations (in execution order)
         """
-        raise NotImplementedError(f"add_transformation_path({path}, {repr(transformations)})")
+        self.lineage_manager.add_transformations(path, transformations)
 
     def cache_transformation_path(self, path: str, transformations: list[str]) -> None:
         """
@@ -61,4 +61,6 @@ class NdnComputeRemote:
         :param path: The name (path) of the distributed dataset.
         :param transformations: The series of transformations to be done; the last one is the cache point.
         """
+        prefixes_to_materialize = self.lineage_manager.materialize_transformations(path, transformations)
+
         raise NotImplementedError(f"cache_transformation_path({path}, {repr(transformations)})")
