@@ -2,7 +2,7 @@ import asyncio
 import zlib
 from ndn.appv2 import NDNApp
 from ndn.security import NullSigner
-from ndn.encoding import FormalName, Name
+from ndn.encoding import FormalName, Name, Signer
 from python_ndn_ext import announce_prefix
 
 
@@ -15,13 +15,14 @@ class WorkerResultStore:
 
     MUST be run as *synchronous* code called from an existing event loop
     """
-    def __init__(self, app: NDNApp, segment_size: int = 1024, memory_limit: int = 2048 * 1024 * 1024):
+    def __init__(self, app: NDNApp, signer: Signer, segment_size: int = 1024, memory_limit: int = 2048 * 1024 * 1024):
         """
         :param app: NDN app in which to announce the result prefix
         :segment_size: The size (in bytes) of each segment to break the result into
         :memory_limit: The maximum size of results to store in RAM (results beyond the limit will be evicted).
         """
         self._app: NDNApp = app
+        self._signer = signer
         self._segment_size = segment_size
         self._memory_limit: int = memory_limit
         self._memory_used: int = 0
@@ -45,7 +46,7 @@ class WorkerResultStore:
         self._names[name_hash] = name
         self._usage_history.insert(0, name_hash)
 
-        asyncio.create_task(announce_prefix(self._app, name, NullSigner()))
+        asyncio.create_task(announce_prefix(self._app, name, self._signer))
 
         if self._memory_used > self._memory_limit:
             self._evict()

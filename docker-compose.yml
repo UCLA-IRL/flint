@@ -10,6 +10,7 @@ services:
     build: ./cluster/nfd-node
     volumes:
        - ./cluster/nfd-node-config:/custom-config
+       - ./sec_data/certs:/certs
     entrypoint: ["/usr/bin/nfd"]
     command: ["--config", "/custom-config/nfd.conf"]
     container_name: nfd1

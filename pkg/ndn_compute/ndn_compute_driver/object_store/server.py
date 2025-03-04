@@ -10,8 +10,8 @@ from typing import Optional
 from ndn_compute_driver.object_store import DriverObjectStore
 from ndn.transport.udp_face import UdpFace
 from ndn.appv2 import NDNApp, ReplyFunc, PktContext
-from ndn.encoding import BinaryStr, FormalName, Component
-from ndn.security import NullSigner
+from ndn.encoding import BinaryStr, FormalName, Component, Signer
+from ndn.security import NullSigner, KeychainSqlite3, TpmFile
 from python_ndn_ext import announce_prefix
 
 
@@ -38,8 +38,15 @@ def on_object_interest(name: FormalName, app_param: Optional[BinaryStr], reply: 
     reply(data)
 
 
+def get_driver_pa_signer() -> Signer:
+    tpm = TpmFile('/opt/driver_keychain/ndnsec-key-file')
+    keychain = KeychainSqlite3('/opt/driver_keychain/pib.db', tpm)
+    identity = keychain.default_identity()
+    return keychain.get_signer({'identity': identity})
+
+
 async def object_server_setup():
-    await announce_prefix(app, f'/{app_prefix}/object/', NullSigner())
+    await announce_prefix(app, f'/{app_prefix}/object/', get_driver_pa_signer())
     app.attach_handler(f'/{app_prefix}/object/', on_object_interest)
 
 
