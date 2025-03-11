@@ -1,3 +1,4 @@
-__all__ = ['WorkerCompute']
+__all__ = ['WorkerCompute', 'DeserializedTransformationInterest']
 
 from .compute import WorkerCompute
+from .utils import DeserializedTransformationInterest

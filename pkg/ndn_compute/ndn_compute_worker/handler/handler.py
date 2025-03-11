@@ -5,10 +5,10 @@ from ndn.transport.udp_face import UdpFace
 from ndn.encoding import BinaryStr, FormalName, Component, Name, MetaInfo, make_data
 from ndn.security import NullSigner
 from ndn_compute_worker.result_store import WorkerResultStore
-from ndn_compute_worker.compute import WorkerCompute
-
+from ndn_compute_worker.compute import WorkerCompute, DeserializedTransformationInterest
 
 class WorkerHandler:
+
     """
     Contains methods (interest handlers) to handle interests to a worker.
     """
@@ -37,6 +37,18 @@ class WorkerHandler:
             asyncio.create_task(self._compute.compute_urandom(result_name))
 
         reply(data)
+            
+    # name: ["ndn-compute", "request", *path, shard_no, "LINEAGE", "TRANSFORMATIONS", *transformations, "END"]
+    def on_transformation_interest(self, name: FormalName, app_param: Optional[BinaryStr], reply: ReplyFunc,
+                        context: PktContext) -> None:
+        dec_name = DeserializedTransformationInterest.decode(name)
+        transformations = "/".join(dec_name.transformations)
+        # no segment name per discussion
+        result_name = Name.from_str(f"/{dec_name.app}/result/{dec_name.filepath}/{dec_name.shard}/32=LINEAGE/32=TRANSFORMATIONS/{transformations}/32=END")
+
+        if not self._result_store.has_result(result_name):
+            asyncio.create_task(self._compute.compute_transform(result_name, dec_name))
+        reply(make_data(name, MetaInfo(), bytes(), NullSigner()))
 
     def on_result_interest(self, name: FormalName, app_param: Optional[BinaryStr], reply: ReplyFunc,
                         context: PktContext) -> None:

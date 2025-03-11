@@ -4,6 +4,7 @@ from ndn.appv2 import NDNApp
 from ndn_compute_driver.executor import DriverExecutor
 from ndn_compute_driver.lineage_manager import LineageManager
 from ndn_compute_driver.object_store import DriverObjectStore
+from typing import Callable
 
 
 TRANSFORMATION_COLLECTION = "Transformation"
@@ -62,5 +63,8 @@ class NdnComputeRemote:
         :param transformations: The series of transformations to be done; the last one is the cache point.
         """
         prefixes_to_materialize = self.lineage_manager.materialize_transformations(path, transformations)
-
-        raise NotImplementedError(f"cache_transformation_path({path}, {repr(transformations)})")
+        # NOTE: newer transformations always later in the list
+        results = [] # TODO: get rid of this eventually, only for debugging right now
+        for prefix_chain in prefixes_to_materialize:
+            results.append(asyncio.run(self.executor.execute_transformations(path, prefix_chain)))
+        return results        

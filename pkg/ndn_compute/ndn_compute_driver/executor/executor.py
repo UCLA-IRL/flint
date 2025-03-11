@@ -1,5 +1,6 @@
 import asyncio
 import os
+import json
 from ndn.appv2 import NDNApp
 from ndn.encoding import Name, Component
 from ndn.types import ValidResult, InterestNack, InterestTimeout, InterestCanceled, MetaInfo, ValidationFailure
@@ -19,6 +20,17 @@ class DriverExecutor:
     def __init__(self, app: NDNApp):
         self.app: NDNApp = app
         self.app_prefix = os.environ.get("APP_PREFIX")
+
+        self.manifest = self._load_manifest() # given this weird bootstrapping idk what better to do here
+
+    def _load_manifest(self, path = "/app/fs-manifest.json"):
+        try:
+            with open(path, "r") as f:
+                print("successfully loaded manifest", flush=True)
+                return json.loads(f.read())
+        except FileNotFoundError:
+            print(f"{path} not found", flush=True)
+            return {}
 
     async def execute_add(self, x: int, y: int) -> int:
         try:
@@ -99,3 +111,43 @@ class DriverExecutor:
             # Validation failure
             print(f'Data failed to validate')
             return bytes(b'9')
+        
+    async def _execute_one_shard(self, path: str, shard: str, transformations: str):
+        try:
+            print(f'SENDING INTEREST: /{self.app_prefix}/request/{path}/{shard}/32=LINEAGE/32=TRANSFORMATIONS/{transformations}/32=END', flush=True)
+            data_name, content, context = await self.app.express(
+                # Interest Name
+                f'/{self.app_prefix}/request/{path}/{shard}/32=LINEAGE/32=TRANSFORMATIONS/{transformations}/32=END',
+                all_valid,
+                must_be_fresh=False,
+                can_be_prefix=False,
+                # Interest lifetime in ms
+                lifetime=6000)
+            # Print out Data Name, MetaInfo and its content.
+            print(f'Received Data Name: {Name.to_str(data_name)}', flush=True)
+            return 10
+        except InterestNack as e:
+            # A NACK is received
+            print(f'Nacked with reason={e.reason}', flush=True)
+            return -2
+        except InterestTimeout:
+            # Interest times out
+            print(f'Timeout')
+            return -3
+        except InterestCanceled:
+            # Connection to NFD is broken
+            print(f'Canceled')
+            return -4
+        except ValidationFailure:
+            # Validation failure
+            print(f'Data failed to validate')
+            return -5
+
+    async def execute_transformations(self, path: str, transformations: list[str]):
+        # given: path of some distributed file (ok sure)
+        # transformations: list of uuid
+        # target name: /(app Name)/request/(file path)/(shard num)/32=LINEAGE/32=TRANSFORMATIONS/(transformation1)/(transformation2)/…/32=END
+        transformations_as_path = "/".join(transformations)
+        return await asyncio.gather(*[self._execute_one_shard(path, str(shard), transformations_as_path)
+                            for shard in list(map(lambda y: list(map(lambda c: c["sequence"], y["chunks"])),
+                                                  filter(lambda x: x["filePath"] == path, self.manifest)))[0]])

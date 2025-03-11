@@ -6,6 +6,7 @@ from xmlrpc.client import ServerProxy
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Self, Optional
+import os
 import dill
 import pandas as pd
 
@@ -108,7 +109,7 @@ class NdnComputeClient:
         """
         class Dataset(self.DatasetBase):
             def __init__(self, path: str, client: NdnComputeClient, transformations: Optional[list[str]] = None):
-                self._path = path
+                self._path = os.path.normpath(path)
                 self._transformations = [] if transformations is None else transformations
                 self._client = client
 
@@ -121,7 +122,7 @@ class NdnComputeClient:
                 return Dataset(self._path, self._client, transformations_updated)
 
             def cache(self) -> Self:
-                self._client.proxy.cache_transformation_path(self._path, self._transformations)
+                print(self._client.proxy.cache_transformation_path(self._path, self._transformations))
 
                 transformations_copy = list(self._transformations)
                 return Dataset(self._path, self._client, transformations_copy)

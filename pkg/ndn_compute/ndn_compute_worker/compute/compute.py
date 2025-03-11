@@ -4,6 +4,7 @@ import zlib
 from ndn.appv2 import NDNApp
 from ndn_compute_worker.result_store import WorkerResultStore
 from ndn.encoding import FormalName
+from .utils import DeserializedTransformationInterest
 
 
 class WorkerCompute:
@@ -27,3 +28,6 @@ class WorkerCompute:
         print(f"urandom computed, hash should be {zlib.crc32(random_bytes)}")
 
         self._result_store.add_result(name, random_bytes)
+
+    async def compute_transform(self, name: FormalName, decoded_interest_name: DeserializedTransformationInterest) -> None:
+        print("HERE", decoded_interest_name, flush=True)

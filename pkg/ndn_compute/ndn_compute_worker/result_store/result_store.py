@@ -62,7 +62,7 @@ class WorkerResultStore:
 
         return name_hash in self._names
 
-    def get_result_segment(self, name: FormalName, segment: int) -> (bytes, int):
+    def get_result_segment(self, name: FormalName, segment: int) -> tuple[bytes, int]:
         """
         Obtain a portion of the result data, at a certain segment number. Updates the LRU.
 
