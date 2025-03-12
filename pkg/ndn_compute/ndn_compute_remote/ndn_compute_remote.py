@@ -64,10 +64,8 @@ class NdnComputeRemote:
         """
         prefixes_to_materialize = self.lineage_manager.materialize_transformations(path, transformations)
         # NOTE: newer transformations always later in the list
-        results = [] # TODO: get rid of this eventually, only for debugging right now
         for prefix_chain in prefixes_to_materialize:
-            results.append(asyncio.run(self.executor.execute_transformations(path, prefix_chain)))
-        return results
+            asyncio.run(self.executor.execute_transformations(path, prefix_chain))
 
     def collect(self, path: str, transformations: list[str]) -> bytes:
         return asyncio.run(self.executor.execute_collect(path, transformations))

@@ -151,7 +151,7 @@ class NdnComputeClient:
                 return self.transform(lambda df: df[df.apply(func, axis=1)].reset_index(drop=True))
 
             def cache(self) -> Self:
-                print(self._client.proxy.cache_transformation_path(self._path, self._transformations))
+                self._client.proxy.cache_transformation_path(self._path, self._transformations)
 
                 transformations_copy = list(self._transformations)
                 return Dataset(self._path, self._client, transformations_copy)
