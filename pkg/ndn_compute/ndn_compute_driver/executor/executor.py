@@ -145,32 +145,6 @@ class DriverExecutor:
             return -5
     
     async def _collect_one_shard(self, path: str, shard: str, transformations: str):
-        try:
-            data_name, content, context = await self.app.express(
-                # Interest Name
-                f'/{self.app_prefix}/result/{path}/{shard}/32=LINEAGE/32=TRANSFORMATIONS/{transformations}/32=END',
-                all_valid,
-                must_be_fresh=False,
-                can_be_prefix=True,
-                # Interest lifetime in ms
-                lifetime=6000)
-        except InterestNack as e:
-            # A NACK is received
-            print(f'Nacked with reason={e.reason}', flush=True)
-            return bytes(b'2')
-        except InterestTimeout:
-            # Interest times out
-            print(f'Timeout')
-            return bytes(b'3')
-        except InterestCanceled:
-            # Connection to NFD is broken
-            print(f'Canceled')
-            return bytes(b'4')
-        except ValidationFailure:
-            # Validation failure
-            print(f'Data failed to validate')
-            return bytes(b'5')
-
         result_bytes = bytearray()
         try:
             async for segment in fetch_segments_with_retry(self.app,
@@ -202,6 +176,8 @@ class DriverExecutor:
                                                   filter(lambda x: x["filePath"] == path, self.manifest)))[0]])
     
     async def execute_collect(self, path: str, transformations: list[str]):
+        await self.execute_transformations(path, transformations)  # request the transformations (if not done already)
+
         transformations_as_path = "/".join(transformations)
         lst = await asyncio.gather(*[self._collect_one_shard(path, str(shard), transformations_as_path)
                             for shard in list(map(lambda y: list(map(lambda c: c["sequence"], y["chunks"])),
