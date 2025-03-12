@@ -68,4 +68,6 @@ class NdnComputeRemote:
             asyncio.run(self.executor.execute_transformations(path, prefix_chain))
 
     def collect(self, path: str, transformations: list[str]) -> bytes:
+        self.cache_transformation_path(path, transformations)  # request the transformations (if not done already)
+
         return asyncio.run(self.executor.execute_collect(path, transformations))

@@ -176,8 +176,6 @@ class DriverExecutor:
                                                   filter(lambda x: x["filePath"] == path, self.manifest)))[0]])
     
     async def execute_collect(self, path: str, transformations: list[str]):
-        await self.execute_transformations(path, transformations)  # request the transformations (if not done already)
-
         transformations_as_path = "/".join(transformations)
         lst = await asyncio.gather(*[self._collect_one_shard(path, str(shard), transformations_as_path)
                             for shard in list(map(lambda y: list(map(lambda c: c["sequence"], y["chunks"])),
