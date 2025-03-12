@@ -47,7 +47,14 @@ class WorkerResultStore:
         self._names[name_hash] = name
         self._usage_history.insert(0, name_hash)
 
-        asyncio.create_task(announce_prefix(self._app, name, self._signer))
+        async def announce_prefix_with_rety():
+            try:
+                await announce_prefix(self._app, name, self._signer)
+            except:
+                await asyncio.sleep(1)
+                await announce_prefix(self._app, name, self._signer)
+
+        asyncio.create_task(announce_prefix_with_rety())
 
         if self._memory_used > self._memory_limit:
             self._evict()
