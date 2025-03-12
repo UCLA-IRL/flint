@@ -60,6 +60,28 @@ class NdnComputeClient:
             pass
 
         @abstractmethod
+        def map(self, func: Callable) -> Self:
+            """
+            Lazily perform a distributed map transformation on a distributed dataset.
+
+            Equivalent to: df_1 = df_0.map(func)
+
+            :param func: Function passed to pandas.DataFrame.map
+            """
+            pass
+
+        @abstractmethod
+        def filter(self, func: Callable) -> Self:
+            """
+            Lazily perform a distributed filter transformation on a distributed dataset.
+
+            Equivalent to: df_1 = df_0[df_0.apply(my_predicate, axis=1)].reset_index(drop=True)
+
+            :param func: Predicate function passed to pandas.DataFrame.apply
+            """
+            pass
+
+        @abstractmethod
         def cache(self) -> Self:
             """
             Provide a hint that the distributed dataset of the current lineage should be cached.
@@ -120,6 +142,12 @@ class NdnComputeClient:
                 self._client.proxy.add_transformation_path(self._path, transformations_updated)
 
                 return Dataset(self._path, self._client, transformations_updated)
+
+            def map(self, func: Callable) -> Self:
+                return self.transform(lambda df: df.map(func))
+
+            def filter(self, func: Callable) -> Self:
+                return self.transform(lambda df: df[df.apply(func, axis=1)].reset_index(drop=True))
 
             def cache(self) -> Self:
                 print(self._client.proxy.cache_transformation_path(self._path, self._transformations))
