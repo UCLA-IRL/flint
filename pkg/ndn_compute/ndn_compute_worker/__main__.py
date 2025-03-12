@@ -55,7 +55,8 @@ async def announce_shards(handler: WorkerHandler, pa_signer: Signer, manifest = 
     available_shards = manifest.get_local_shards()
     for shard, path in available_shards:
         await announce_prefix(app, f'/{app_prefix}/request/{path}/{shard}', pa_signer)
-        app.attach_handler(f'/{app_prefix}/request/{path}/{shard}', handler.on_transformation_interest)
+
+    app.attach_handler(f'/{app_prefix}/request', handler.on_transformation_interest)
 
 # Temporary note: we don't use the app.route decorator for a few reasons:
 #   1. We want to announce sharded files by fragment granularity (a.log/1, a.log/5), but have one handler for all files

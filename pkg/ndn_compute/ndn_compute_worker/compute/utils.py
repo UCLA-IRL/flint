@@ -1,4 +1,31 @@
 from ndn.encoding import FormalName, Component
+from ndn.types import ValidResult, InterestNack, InterestTimeout, InterestCanceled, ValidationFailure
+from ndn.appv2 import NDNApp
+
+async def all_valid(name, sig, ctx) -> ValidResult:
+    return ValidResult.ALLOW_BYPASS
+
+# See if network has cached some transformation path
+async def attempt_interest(app: NDNApp, name: FormalName) -> bool:
+    try:
+        await app.express(
+        # Interest Name
+        name,
+            all_valid,
+            must_be_fresh=False,
+            can_be_prefix=False,
+            # Interest lifetime in ms
+            lifetime=6000)
+        
+        return True
+    except InterestNack as e:
+        return False
+    except InterestTimeout:
+        return False
+    except InterestCanceled:
+        return False
+    except ValidationFailure:
+        return False
 
 class DeserializedTransformationInterest:
     def __init__(self):
