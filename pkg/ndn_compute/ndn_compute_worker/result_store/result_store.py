@@ -1,4 +1,5 @@
 import asyncio
+from typing import Generator
 import zlib
 from ndn.appv2 import NDNApp
 from ndn.security import NullSigner
@@ -94,6 +95,26 @@ class WorkerResultStore:
             final_segment += 1
 
         return result[start_offset:end_offset], final_segment
+    
+    def get_result_segments(self, name: FormalName) -> Generator[bytes, None, None]:
+        """
+        Same as `get_result_segment`, but in generator form. 
+        :param name: The result name to query, excluding the segment component
+        :param segment: The (0-indexed) segment number
+        :return: Generator with all segments
+        :raises Exception: Invalid segment number; the result is not in the store or has been evicted
+        """
+
+        cur_seg = 0
+        first_seg, final_seg_num = self.get_result_segment(name, cur_seg)
+        yield first_seg
+
+        cur_seg += 1
+
+        while cur_seg <= final_seg_num:
+            seg, _ = self.get_result_segment(name, cur_seg)
+            yield seg
+            cur_seg += 1
 
     def _evict(self):
         while self._memory_used > self._memory_limit:

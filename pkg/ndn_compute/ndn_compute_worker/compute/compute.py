@@ -9,6 +9,7 @@ from ndn.encoding import FormalName, Name
 from ndn.types import ValidResult, InterestNack, InterestTimeout, InterestCanceled, ValidationFailure
 from .utils import DeserializedTransformationInterest, attempt_interest, all_valid
 from python_ndn_ext.segment_fetcher_v2 import fetch_segments
+from io import BytesIO
 
 
 class WorkerCompute:
@@ -40,8 +41,6 @@ class WorkerCompute:
         :param name: Name of shard + transformations to apply
         :param decoded_interest_name: Individual components of interest name
         """
-        print("HERE", decoded_interest_name, flush=True)
-
         # Get all transformations except for the very last one
         transformations = [*decoded_interest_name.transformations[:-1]]
 
@@ -64,7 +63,7 @@ class WorkerCompute:
                 break
 
             # Check if network has transformed data
-            if attempt_interest(self.app, name_to_check):
+            if await attempt_interest(self._app, name_to_check):
                 should_fetch_segments = True
                 break
 
@@ -99,16 +98,16 @@ class WorkerCompute:
                         data = seg
                     else:
                         data += seg
-            except:
+            except Exception as err:
                 print("Failed to get segments from store")
+                print(err)
                 return
             
         # Read data as JSONL dataframe
-        df = pd.read_json(data.decode('utf-8'), lines=True)
+        df = pd.read_json(BytesIO(data), lines=True)
         
         # Get requisite transformations from driver object store
         async def get_transformation(transformation: str) -> callable:
-            print(f"/{decoded_interest_name.app}/object/Transformation/{transformation}", flush=True)
             _, content, _ = await self._app.express(
                 # Interest Name
                 f"/{decoded_interest_name.app}/object/Transformation/{transformation}",
@@ -129,7 +128,7 @@ class WorkerCompute:
 
         # Place result in result store
         final_json = df.to_json(orient="records", lines=True)
-        self._result_store.add_result(name, final_json)
+        self._result_store.add_result(name, bytes(final_json, 'utf-8'))
 
         
 
