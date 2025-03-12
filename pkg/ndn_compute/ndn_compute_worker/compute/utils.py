@@ -47,7 +47,7 @@ class DeserializedTransformationInterest:
         self.shard = shard
 
     def __repr__(self) -> str:
-        return f"<{self.filepath}, {self.shard}, {self.transformations}>"
+        return f"<{self.app}, {self.filepath}, {self.shard}, {self.transformations}>"
     
     def __str__(self) -> str:
         return self.__repr__()
@@ -64,6 +64,7 @@ class DeserializedTransformationInterest:
         for idx, component in enumerate(map(lambda c: bytes(Component.get_value(c)).decode("utf-8"), name)):
             if idx == 0:
                 result.set_app(component)
+                continue
             if idx == 1:
                 continue # who cares
             if not done_with_path and component == "LINEAGE": # LINEAGE spotted, done with path and shard is the last one we saw

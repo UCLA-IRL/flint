@@ -27,7 +27,7 @@ class WorkerCompute:
                      determine what work to do.
         """
         await asyncio.sleep(2)
-        random_bytes = os.urandom(64 * 1024 * 1024)  # 64 MB
+        random_bytes = os.urandom(64 * 1024 * 1024)  # 64 MiB
 
         print(f"urandom computed, hash should be {zlib.crc32(random_bytes)}")
 
@@ -104,29 +104,21 @@ class WorkerCompute:
                 return
             
         # Read data as JSONL dataframe
-        df = pd.read_json(data, lines=True)
+        df = pd.read_json(data.decode('utf-8'), lines=True)
         
         # Get requisite transformations from driver object store
         async def get_transformation(transformation: str) -> callable:
-            try:
-                _, content, _ = await self._app.express(
+            print(f"/{decoded_interest_name.app}/object/Transformation/{transformation}", flush=True)
+            _, content, _ = await self._app.express(
                 # Interest Name
-                f"/{decoded_interest_name.app}/object/{transformation}",
+                f"/{decoded_interest_name.app}/object/Transformation/{transformation}",
                     all_valid,
                     must_be_fresh=False,
                     can_be_prefix=False,
                     # Interest lifetime in ms
                     lifetime=6000)
 
-                return dill.loads(content)
-            except InterestNack as e:
-                return False
-            except InterestTimeout:
-                return False
-            except InterestCanceled:
-                return False
-            except ValidationFailure:
-                return False
+            return dill.loads(content)
             
         # Get each transformation function
         transform_funcs = await asyncio.gather(*map(get_transformation, applying_transformations))
@@ -136,7 +128,8 @@ class WorkerCompute:
             df = df.transform(f)
 
         # Place result in result store
-        self._result_store.add_result(name, df.to_json(lines=True))
+        final_json = df.to_json(orient="records", lines=True)
+        self._result_store.add_result(name, final_json)
 
         
 
