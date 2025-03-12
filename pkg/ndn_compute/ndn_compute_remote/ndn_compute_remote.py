@@ -67,4 +67,7 @@ class NdnComputeRemote:
         results = [] # TODO: get rid of this eventually, only for debugging right now
         for prefix_chain in prefixes_to_materialize:
             results.append(asyncio.run(self.executor.execute_transformations(path, prefix_chain)))
-        return results        
+        return results
+
+    def collect(self, path: str, transformations: list[str]) -> bytes:
+        return asyncio.run(self.executor.execute_collect(path, transformations))

@@ -6,6 +6,7 @@ from xmlrpc.client import ServerProxy
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Self, Optional
+from io import BytesIO
 import os
 import dill
 import pandas as pd
@@ -159,7 +160,8 @@ class NdnComputeClient:
                 raise NotImplementedError("reduce")
 
             def collect(self) -> pd.DataFrame:
-                raise NotImplementedError("collect")
+                b = self._client.proxy.collect(self._path, self._transformations)
+                return pd.read_json(BytesIO(b), lines=True)
 
             def for_each(self, func: Callable) -> None:
                 raise NotImplementedError("for_each")
