@@ -124,7 +124,7 @@ class WorkerCompute:
 
         # Apply each transformation function to dataframe
         for f in transform_funcs:
-            df = df.transform(f)
+            df = f(df)
 
         # Place result in result store
         final_json = df.to_json(orient="records", lines=True)
