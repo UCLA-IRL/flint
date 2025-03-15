@@ -167,7 +167,7 @@ def run_ndn_compute_cluster(num_workers=2, rebuild=False, client=None):
         worker_containers.append(worker_config)
 
     for _ in range(5):  # try up to 5 times to fix worker startup race condition
-        workers_healthy = _ensure_worker_healthy(client, worker_containers, network)
+        workers_healthy = _ensure_workers_healthy(client, worker_containers)
         if workers_healthy:
             break
 
@@ -225,7 +225,7 @@ def _start_worker(client, n, network):
     }
 
 
-def _ensure_worker_healthy(client, worker_containers, network):
+def _ensure_workers_healthy(client, worker_containers):
     time.sleep(8)
     all_healthy = True
     for worker_container in worker_containers:
@@ -234,7 +234,7 @@ def _ensure_worker_healthy(client, worker_containers, network):
         if container.status != "running":
             all_healthy = False
             print(f"Worker container {worker_container['name']} was not healthy, restarting...")
-            _start_worker(client, int(worker_container['id']), network)
+            container.restart(timeout=1)
 
     return all_healthy
 
@@ -308,3 +308,67 @@ def stop_ndn_compute_cluster(client=None):
         print(f"Error removing network: {e}")
 
     print(f"NDN compute cluster shutdown complete. Stopped {worker_count} workers.")
+
+
+def restart_ndn_compute_cluster(client=None):
+    # Initialize Docker client if not provided
+    if client is None:
+        client = docker.from_env()
+
+    print("Restarting NDN compute cluster...")
+
+    # Restart NFD container
+    try:
+        nfd_container = client.containers.get("nfd1")
+        print("Restarting NFD container...")
+        nfd_container.restart()
+    except docker.errors.NotFound:
+        print("NFD container not found.")
+    except Exception as e:
+        print(f"Error restarting NFD container: {e}")
+
+    # Restart driver container
+    try:
+        driver_container = client.containers.get("driver1")
+        print("Restarting driver container...")
+        driver_container.restart(timeout=1)
+    except docker.errors.NotFound:
+        print("Driver container not found.")
+    except Exception as e:
+        print(f"Error restarting driver container: {e}")
+
+    # Find and restart all worker containers (worker1, worker2, etc.)
+    worker_count = 0
+    worker_index = 1
+    worker_containers = list()
+
+    # Keep looking for workers until we find one that doesn't exist
+    while True:
+        worker_name = f"worker{worker_index}"
+        try:
+            worker_container = client.containers.get(worker_name)
+            print(f"Restarting {worker_name} container...")
+            worker_container.restart(timeout=1)
+            worker_count += 1
+            worker_containers.append({
+                'name': worker_name,
+                'id': str(worker_index)
+            })
+        except docker.errors.NotFound:
+            print(f"{worker_name} container not found.")
+            # Break the loop at the first missing worker
+            break
+        except Exception as e:
+            print(f"Error restarting {worker_name} container: {e}")
+            # Also break if there's an error with a worker container
+            break
+
+        worker_index += 1
+
+    for _ in range(5):  # try up to 5 times to fix worker startup race condition
+        workers_healthy = _ensure_workers_healthy(client, worker_containers)
+        if workers_healthy:
+            print("NDN Cluster workers healthy")
+            break
+
+    print(f"NDN compute cluster restart complete. Restarted {worker_count} workers.")

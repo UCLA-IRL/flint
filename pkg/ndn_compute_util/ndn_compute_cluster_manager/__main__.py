@@ -1,7 +1,8 @@
 from ndn_compute_cluster_manager import (buildnfd_ndn_compute_cluster,
                                          build_ndn_compute_cluster,
                                          run_ndn_compute_cluster,
-                                         stop_ndn_compute_cluster)
+                                         stop_ndn_compute_cluster,
+                                         restart_ndn_compute_cluster)
 import sys
 import argparse
 import os
@@ -50,6 +51,12 @@ if __name__ == "__main__":
         help="Stop all running NDN compute cluster containers"
     )
 
+    # Restart command
+    restart_parser = subparsers.add_parser(
+        "restart",
+        help="Restart all running NDN compute cluster containers"
+    )
+
     args = parser.parse_args()
 
     if not os.path.isdir('cluster'):
@@ -64,6 +71,8 @@ if __name__ == "__main__":
         run_ndn_compute_cluster(num_workers=args.num_workers, rebuild=args.rebuild)
     elif args.command == "stop":
         stop_ndn_compute_cluster()
+    elif args.command == "restart":
+        restart_ndn_compute_cluster()
     else:
         parser.print_help()
         sys.exit(1)
