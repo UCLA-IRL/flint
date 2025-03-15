@@ -6,5 +6,6 @@ setup(
     packages=find_packages(),  # Automatically find subpackages
     install_requires=[
         "python-ndn==0.5.0",
+        "docker==7.1.0",
     ],
 )
