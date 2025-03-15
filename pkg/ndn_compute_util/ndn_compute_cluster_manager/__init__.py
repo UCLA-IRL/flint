@@ -1,3 +1,9 @@
-__all__ = ["run_ndn_compute_stack"]
+__all__ = ["buildnfd_ndn_compute_cluster",
+           "build_ndn_compute_cluster",
+           "run_ndn_compute_cluster",
+           "stop_ndn_compute_cluster"]
 
-from .ndn_compute_cluster_manager import run_ndn_compute_stack
+from .ndn_compute_cluster_manager import (buildnfd_ndn_compute_cluster,
+                                          build_ndn_compute_cluster,
+                                          run_ndn_compute_cluster,
+                                          stop_ndn_compute_cluster)

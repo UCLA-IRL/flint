@@ -13,7 +13,7 @@ def _image_exists(client, tag: str) -> bool:
     return any(img.tags and tag in img.tags for img in client.images.list())
 
 
-def buildnfd_ndn_compute_stack(client=None):
+def buildnfd_ndn_compute_cluster(client=None):
     """
     Building NFD takes forever, so we separate it out.
 
@@ -28,7 +28,7 @@ def buildnfd_ndn_compute_stack(client=None):
     if result.returncode != 0:
         raise RuntimeError(f"NFD docker build failed, hint: try manually running to see stdout: {command}")
 
-def build_ndn_compute_stack(client=None):
+def build_ndn_compute_cluster(client=None):
     # Initialize Docker client if not provided
     if client is None:
         client = docker.from_env()
@@ -53,11 +53,10 @@ def build_ndn_compute_stack(client=None):
         rm=True
     )
 
-# TODO: stop_ndn_compute_stack
 
-def run_ndn_compute_stack(num_workers=2, client=None):
+def run_ndn_compute_cluster(num_workers=2, rebuild=False, client=None):
     """
-    Deploy the ndn-compute stack using the Docker SDK
+    Deploy the ndn-compute cluster using the Docker SDK
 
     Args:
         num_workers: Number of worker containers to create
@@ -68,10 +67,10 @@ def run_ndn_compute_stack(num_workers=2, client=None):
         client = docker.from_env()
 
     if not _image_exists(client, nfd_image_tag):
-        buildnfd_ndn_compute_stack(client)
+        buildnfd_ndn_compute_cluster(client)
 
-    if not _image_exists(client, driver_image_tag) or not _image_exists(client, worker_image_tag):
-        build_ndn_compute_stack(client)
+    if not _image_exists(client, driver_image_tag) or not _image_exists(client, worker_image_tag) or rebuild:
+        build_ndn_compute_cluster(client)
 
     # Create network with specific subnet
     print("Creating network...")
@@ -199,10 +198,81 @@ def run_ndn_compute_stack(num_workers=2, client=None):
             "container": worker_container
         })
 
-    print(f"NDN compute stack deployment complete with {num_workers} workers!")
+    print(f"NDN compute cluster deployment complete with {num_workers} workers!")
     return {
         "network": network,
         "nfd": nfd_container,
         "driver": driver_container,
         "workers": worker_containers
     }
+
+
+def stop_ndn_compute_cluster(client=None):
+    # Initialize Docker client if not provided
+    if client is None:
+        client = docker.from_env()
+
+    print("Stopping NDN compute cluster...")
+
+    # Stop NFD container
+    try:
+        nfd_container = client.containers.get("nfd1")
+        print("Stopping NFD container...")
+        nfd_container.stop()
+        nfd_container.remove()
+        print("NFD container stopped and removed.")
+    except docker.errors.NotFound:
+        print("NFD container not found.")
+    except Exception as e:
+        print(f"Error stopping NFD container: {e}")
+
+    # Stop driver container
+    try:
+        driver_container = client.containers.get("driver1")
+        print("Stopping driver container...")
+        driver_container.stop()
+        driver_container.remove()
+        print("Driver container stopped and removed.")
+    except docker.errors.NotFound:
+        print("Driver container not found.")
+    except Exception as e:
+        print(f"Error stopping driver container: {e}")
+
+    # Find and stop all worker containers (worker1, worker2, etc.)
+    worker_count = 0
+    worker_index = 1
+
+    # Keep looking for workers until we find one that doesn't exist
+    while True:
+        worker_name = f"worker{worker_index}"
+        try:
+            worker_container = client.containers.get(worker_name)
+            print(f"Stopping {worker_name} container...")
+            worker_container.stop()
+            worker_container.remove()
+            worker_count += 1
+            print(f"{worker_name} container stopped and removed.")
+        except docker.errors.NotFound:
+            print(f"{worker_name} container not found.")
+            # Break the loop at the first missing worker
+            break
+        except Exception as e:
+            print(f"Error stopping {worker_name} container: {e}")
+            # Also break if there's an error with a worker container
+            break
+
+        worker_index += 1
+
+    # Remove the network
+    network_name = "ndn_compute_net"
+    try:
+        network = client.networks.get(network_name)
+        print(f"Removing network {network_name}...")
+        network.remove()
+        print(f"Network {network_name} removed.")
+    except docker.errors.NotFound:
+        print(f"Network {network_name} not found.")
+    except Exception as e:
+        print(f"Error removing network: {e}")
+
+    print(f"NDN compute cluster shutdown complete. Stopped {worker_count} workers.")

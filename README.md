@@ -19,4 +19,77 @@ worker nodes as well as the NFD router.
 
 ndn-compute is tested on Python 3.11 and Docker.
 
+#### Option 1 (Recommended): Interactive Notebook / Getting Started Guide
+
 Please see `notebooks/getting-started.ipynb` for a guide on how to initialize and run the cluster.
+
+#### Option 2: CLI
+
+The commands done here are (mostly) equivalent to those in the notebook.
+
+**Starting up (first time):**
+
+```bash
+echo "Installing Dependencies..."
+git submodule update --init --recursive
+bash -c 'for dir in ./pkg/*/; do [ -d "$dir" ] && pip install --find-links=./pkg "$dir"; done'
+
+echo "Security Setup..."
+python -m ndn_compute_key_creator --path sec_data/ --entities driver worker
+
+echo "Generating Data..."
+rm -rf generated_data
+mkdir -p generated_data/flat/appA
+mkdir -p generated_data/flat/appB
+
+python -m ndn_compute_jsonl_generator "generated_data/flat/appA/events.log.jsonl" 200
+python -m ndn_compute_jsonl_generator "generated_data/flat/appB/events.log.jsonl" 500
+
+mkdir -p generated_data/distributed
+python -m ndn_compute_fs_creator "generated_data/flat" "generated_data/distributed" --partitions 3 --copies 2 --chunk-size 64
+
+echo "Starting Cluster..."
+python -m ndn_compute_cluster_manager start 3
+
+echo "Cluster ready! Dropping into Python REPL..."
+python
+```
+
+**Starting up (after changing code or keys):**
+```bash
+echo "Starting Cluster..."
+python -m ndn_compute_cluster_manager start 3 --rebuild
+
+echo "Cluster ready! Dropping into Python REPL..."
+python
+```
+
+**Starting up (normal):**
+```bash
+echo "Starting Cluster..."
+python -m ndn_compute_cluster_manager start 3
+
+echo "Cluster ready! Dropping into Python REPL..."
+python
+```
+
+**Using in Python script/REPL:**
+```py
+from ndn_compute_client import NdnComputeClient
+client = NdnComputeClient('http://localhost:5214')
+
+dataset = client.create_dataset("appB/events.log.jsonl")
+
+pred = lambda row: row['event_type'] == 'purchase' and row['device'] == 'tablet' and row['browser'] == 'safari'
+ipad_purchases = dataset.filter(pred).collect()
+
+print(ipad_purchases.head())
+
+exit()
+```
+
+**Cleanup:**
+```bash
+echo "Stopping Cluster..."
+python -m ndn_compute_cluster_manager stop
+```

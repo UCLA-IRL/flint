@@ -1,3 +1,5 @@
+# NOTE: rename me to "docker-compose.yml" to use the (deprecated) docker-compose up command to start the cluster
+
 networks:
   ndn_compute_net:
     driver: bridge
