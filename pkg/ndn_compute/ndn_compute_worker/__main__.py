@@ -23,7 +23,7 @@ app_prefix = os.environ.get("APP_PREFIX")
 worker_id = int(os.environ.get("WORKER_ID"))
 
 class NodeManifest:
-    def __init__(self, path: str = "/app/fs-manifest.json"):
+    def __init__(self, path: str = "/app/manifest/fs-manifest.json"):
         with open(path, "r") as f:
             self._contents = json.loads(f.read())
     

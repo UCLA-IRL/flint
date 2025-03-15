@@ -33,7 +33,7 @@ def create_fs_from_directory(in_dir: str, out_dir: str,
     4. For every chunk, choose at random which `num_copies` partitions to which to put the chunk in,
       then move the chunk to the folder whose name corresponds to the original file. The
       chunk will be named "i" where i is the 0-indexed order of the chunk.
-    5. Generate a fs-manifest.json in the root of out_dir containing metadata about all files and chunks.
+    5. Generate a fs-manifest.json in a manifest directory in out_dir containing metadata about all files and chunks.
 
     Precondition:
     - `num_copies` <= `num_partitions`
@@ -158,7 +158,9 @@ def create_fs_from_directory(in_dir: str, out_dir: str,
             files_metadata.append(file_info)
 
     # Step 5: Write manifest
-    manifest_path = out_path / "fs-manifest.json"
+    manifest_dir = out_path / "manifest"
+    manifest_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path = manifest_dir / "fs-manifest.json"
     with open(manifest_path, 'w', encoding='utf-8') as f:
         # Use asdict to convert dataclasses to dictionaries for JSON serialization
         manifest_data = [asdict(file_info) for file_info in files_metadata]

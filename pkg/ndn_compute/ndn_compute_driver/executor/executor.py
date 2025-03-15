@@ -24,7 +24,7 @@ class DriverExecutor:
 
         self.manifest = self._load_manifest() # given this weird bootstrapping idk what better to do here
 
-    def _load_manifest(self, path = "/app/fs-manifest.json"):
+    def _load_manifest(self, path = "/app/manifest/fs-manifest.json"):
         try:
             with open(path, "r") as f:
                 print("successfully loaded manifest", flush=True)

@@ -135,6 +135,8 @@ def run_ndn_compute_cluster(num_workers=2, rebuild=False, client=None):
     except docker.errors.NotFound:
         pass
 
+    manifest_dir = f'./generated_data/distributed/manifest'
+
     driver_container = client.containers.run(
         driver_image_tag,
         name="driver1",
@@ -142,6 +144,9 @@ def run_ndn_compute_cluster(num_workers=2, rebuild=False, client=None):
         environment={
             "APP_PREFIX": app_prefix,
             "MANAGEMENT_PORT": "5214"
+        },
+        volumes={
+            os.path.abspath(manifest_dir): {'bind': '/app/manifest', 'mode': 'rw'}
         },
         ports={'5214/tcp': 5214},
         network=network_name
@@ -189,9 +194,8 @@ def _start_worker(client, n, network):
     except docker.errors.NotFound:
         pass
 
-    # Ensure the data directory exists
+    manifest_dir = f'./generated_data/distributed/manifest'
     data_dir = f'./generated_data/distributed/{worker_id}'
-    os.makedirs(os.path.abspath(data_dir), exist_ok=True)
 
     worker_container = client.containers.run(
         worker_image_tag,
@@ -202,6 +206,7 @@ def _start_worker(client, n, network):
             "WORKER_ID": worker_id
         },
         volumes={
+            os.path.abspath(manifest_dir): {'bind': '/app/manifest', 'mode': 'rw'},
             os.path.abspath(data_dir): {'bind': '/app/data', 'mode': 'rw'}
         },
         network=network_name

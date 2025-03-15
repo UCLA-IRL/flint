@@ -34,6 +34,8 @@ services:
     environment:
       - APP_PREFIX=ndn-compute
       - MANAGEMENT_PORT=5214
+    volumes:
+      - ./generated_data/distributed/manifest:/app/manifest
   # TODO: docker-compose for loop??
   # TODO: doing it like this generates an image for every instance, even though the instance is identical
   worker1:
@@ -49,6 +51,7 @@ services:
       - WORKER_ID=1
     volumes:
       - ./generated_data/distributed/1:/app/data
+      - ./generated_data/distributed/manifest:/app/manifest
   worker2:
     build:
       context: ./
@@ -62,3 +65,4 @@ services:
       - WORKER_ID=2
     volumes:
       - ./generated_data/distributed/2:/app/data
+      - ./generated_data/distributed/manifest:/app/manifest
