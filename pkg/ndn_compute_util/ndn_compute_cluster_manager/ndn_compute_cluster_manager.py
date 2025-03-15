@@ -1,14 +1,16 @@
 import docker
 import os
 import subprocess
+import time
 
 
 nfd_image_tag = "ndn-compute/nfd:latest"
 driver_image_tag = "ndn-compute/driver:latest"
 worker_image_tag = "ndn-compute/worker:latest"
+network_name = "ndn_compute_net"
+app_prefix = "ndn-compute"
 
 
-# TODO: show usage in getting-started.ipynb
 def _image_exists(client, tag: str) -> bool:
     return any(img.tags and tag in img.tags for img in client.images.list())
 
@@ -74,7 +76,6 @@ def run_ndn_compute_cluster(num_workers=2, rebuild=False, client=None):
 
     # Create network with specific subnet
     print("Creating network...")
-    network_name = "ndn_compute_net"
     try:
         network = client.networks.get(network_name)
         print(f"Network {network_name} already exists")
@@ -115,7 +116,7 @@ def run_ndn_compute_cluster(num_workers=2, rebuild=False, client=None):
         },
         detach=True,
         environment={
-            "APP_PREFIX": "ndn-compute"
+            "APP_PREFIX": app_prefix
         },
         network=network_name
     )
@@ -139,7 +140,7 @@ def run_ndn_compute_cluster(num_workers=2, rebuild=False, client=None):
         name="driver1",
         detach=True,
         environment={
-            "APP_PREFIX": "ndn-compute",
+            "APP_PREFIX": app_prefix,
             "MANAGEMENT_PORT": "5214"
         },
         ports={'5214/tcp': 5214},
@@ -155,48 +156,15 @@ def run_ndn_compute_cluster(num_workers=2, rebuild=False, client=None):
     worker_containers = []
 
     for n in range(1, num_workers + 1):
-        worker_name = f"worker{n}"
-        worker_ip = f"192.168.1.{19 + n}"  # Starting from 192.168.1.20 for worker1
-        worker_id = str(n)
+        time.sleep(1)
 
-        print(f"Starting worker container: {worker_name} with IP {worker_ip}...")
+        worker_config = _start_worker(client, n, network)
+        worker_containers.append(worker_config)
 
-        try:
-            old_container = client.containers.get(worker_name)
-            print(f"Found existing {worker_name} container, removing...")
-            old_container.remove(force=True)
-        except docker.errors.NotFound:
-            pass
-
-        # Ensure the data directory exists
-        data_dir = f'./generated_data/distributed/{worker_id}'
-        os.makedirs(os.path.abspath(data_dir), exist_ok=True)
-
-        worker_container = client.containers.run(
-            worker_image_tag,
-            name=worker_name,
-            detach=True,
-            environment={
-                "APP_PREFIX": "ndn-compute",
-                "WORKER_ID": worker_id
-            },
-            volumes={
-                os.path.abspath(data_dir): {'bind': '/app/data', 'mode': 'rw'}
-            },
-            network=network_name
-        )
-
-        # Need to set the specific IP after container creation
-        network.disconnect(worker_container)
-        network.connect(worker_container, ipv4_address=worker_ip)
-        print(f"Worker container {worker_name} started with ID: {worker_container.id}")
-
-        worker_containers.append({
-            "name": worker_name,
-            "ip": worker_ip,
-            "id": worker_id,
-            "container": worker_container
-        })
+    for _ in range(5):  # try up to 5 times to fix worker startup race condition
+        workers_healthy = _ensure_worker_healthy(client, worker_containers, network)
+        if workers_healthy:
+            break
 
     print(f"NDN compute cluster deployment complete with {num_workers} workers!")
     return {
@@ -205,6 +173,65 @@ def run_ndn_compute_cluster(num_workers=2, rebuild=False, client=None):
         "driver": driver_container,
         "workers": worker_containers
     }
+
+
+def _start_worker(client, n, network):
+    worker_name = f"worker{n}"
+    worker_ip = f"192.168.1.{19 + n}"  # Starting from 192.168.1.20 for worker1
+    worker_id = str(n)
+
+    print(f"Starting worker container: {worker_name} with IP {worker_ip}...")
+
+    try:
+        old_container = client.containers.get(worker_name)
+        print(f"Found existing {worker_name} container, removing...")
+        old_container.remove(force=True)
+    except docker.errors.NotFound:
+        pass
+
+    # Ensure the data directory exists
+    data_dir = f'./generated_data/distributed/{worker_id}'
+    os.makedirs(os.path.abspath(data_dir), exist_ok=True)
+
+    worker_container = client.containers.run(
+        worker_image_tag,
+        name=worker_name,
+        detach=True,
+        environment={
+            "APP_PREFIX": app_prefix,
+            "WORKER_ID": worker_id
+        },
+        volumes={
+            os.path.abspath(data_dir): {'bind': '/app/data', 'mode': 'rw'}
+        },
+        network=network_name
+    )
+
+    # Need to set the specific IP after container creation
+    network.disconnect(worker_container)
+    network.connect(worker_container, ipv4_address=worker_ip)
+    print(f"Worker container {worker_name} started with ID: {worker_container.id}")
+
+    return {
+        "name": worker_name,
+        "ip": worker_ip,
+        "id": worker_id,
+        "container": worker_container
+    }
+
+
+def _ensure_worker_healthy(client, worker_containers, network):
+    time.sleep(8)
+    all_healthy = True
+    for worker_container in worker_containers:
+        container = client.containers.get(worker_container['name'])
+
+        if container.status != "running":
+            all_healthy = False
+            print(f"Worker container {worker_container['name']} was not healthy, restarting...")
+            _start_worker(client, int(worker_container['id']), network)
+
+    return all_healthy
 
 
 def stop_ndn_compute_cluster(client=None):
