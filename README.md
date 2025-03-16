@@ -17,7 +17,7 @@ worker nodes as well as the NFD router.
 
 ### Installation / Running
 
-ndn-compute is tested on Python 3.11 and Docker.
+Flint is tested on Python 3.11 and Docker.
 
 #### Option 1 (Recommended): Interactive Notebook / Getting Started Guide
 
